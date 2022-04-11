@@ -9,39 +9,21 @@ import (
 	"path/filepath"
 )
 
-// Extracts .gzip files.
-// Extracts .tar.gzip and .tar.gz files to .tar
-func UnGzip(source, target string) error {
-	reader, err := os.Open(source)
+// Extracts .tar.gzip and .tar.gz files
+func ExtractTarball(targz, target string) error {
+	targzReader, err := os.Open(targz)
 	if err != nil {
 		return err
 	}
-	defer reader.Close()
+	defer targzReader.Close()
 
-	archive, err := gzip.NewReader(reader)
+	tarArchive, err := gzip.NewReader(targzReader)
 	if err != nil {
 		return err
 	}
-	defer archive.Close()
+	defer tarArchive.Close()
 
-	writer, err := os.Create(target)
-	if err != nil {
-		return err
-	}
-	defer writer.Close()
-
-	_, err = io.Copy(writer, archive)
-	return err
-}
-
-// Extracts .tar files
-func Untar(tarball, target string) error {
-	reader, err := os.Open(tarball)
-	if err != nil {
-		return err
-	}
-	defer reader.Close()
-	tarReader := tar.NewReader(reader)
+	tarReader := tar.NewReader(tarArchive)
 
 	for {
 		header, err := tarReader.Next()
@@ -79,12 +61,8 @@ func main() {
 	}
 	tarball := os.Args[1]
 	destination := os.Args[2]
-	err := UnGzip(tarball, "temp.tar")
-	if err != nil {
-		log.Fatalf("An error occurred while extracting the gzip / gz file at %s. Error: %s", tarball, err)
-	}
 
-	err = Untar("temp.tar", destination)
+	err := ExtractTarball(tarball, destination)
 	if err != nil {
 		log.Fatalf("An error occurred while extract tar file at %s. Error: %s", "temp.tar", err)
 	}
